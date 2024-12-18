@@ -65,7 +65,7 @@ func main() {
 		}
 	}
 	// Print final message when all cloning is done
-	fmt.Println("🎉 All Git clones completed successfully! 🎉")
+	log.Println("🎉 All Git clones completed successfully! 🎉")
 }
 
 func getGroupApiURL(groupParam string) string {
@@ -131,7 +131,7 @@ func listProjectsAndClone(groupId string, subGroupPath string) {
 	for _, project := range projects {
 		err := cloneGitProject(project.HttpsUrl, subGroupPath, project.Path)
 		if err != nil {
-			fmt.Printf("Error occurred: %v\n", err)
+			log.Fatalf("Error occurred: %v\n", err)
 		}
 	}
 
@@ -140,13 +140,13 @@ func listProjectsAndClone(groupId string, subGroupPath string) {
 func cloneGitProject(gitProjectUrl string, fullPath string, projectPath string) error {
 	cloneDir := path.Join(baseDir, fullPath)
 	if _, err := os.Stat(path.Join(cloneDir, projectPath)); err == nil {
-		fmt.Printf("🔍 Skipping cloning for project: %s. Directory already exists at: %s\n", gitProjectUrl, cloneDir)
+		log.Printf("🔍 Skipping cloning for project: %s. Directory already exists at: %s\n", gitProjectUrl, cloneDir)
 		return nil
 	}
 
 	// Ensure the target directory exists, create it if it doesn't
 	if err := os.MkdirAll(cloneDir, os.ModePerm); err != nil {
-		return fmt.Errorf("failed to create directory %s: %v", cloneDir, err)
+		log.Printf("failed to create directory %s: %v", cloneDir, err)
 	}
 
 	cmd := exec.Command("git", "clone", gitProjectUrl)
@@ -156,10 +156,10 @@ func cloneGitProject(gitProjectUrl string, fullPath string, projectPath string) 
 
 	// Run the command
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to clone project %s: %v", gitProjectUrl, err)
+		log.Fatalf("failed to clone project %s: %v", gitProjectUrl, err)
 	}
 
-	fmt.Printf(" ✅ Project: %s cloned into folder: %s...\n", gitProjectUrl, cloneDir)
+	log.Printf(" ✅ Project: %s cloned into folder: %s...\n", gitProjectUrl, cloneDir)
 
 	return nil
 }
@@ -169,17 +169,20 @@ func request(url string) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		log.Printf("failed to create request: %v", err)
+		return nil, err
 	}
 	req.Header.Set("PRIVATE-TOKEN", accessToken)
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		log.Printf("failed to send request: %v", err)
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected response: %s, body: %s", resp.Status, string(body))
+		log.Printf("unexpected response: %s, body: %s", resp.Status, string(body))
+		return nil, fmt.Errorf("unexpected response: %s", resp.Status)
 	}
 
 	return resp, nil
