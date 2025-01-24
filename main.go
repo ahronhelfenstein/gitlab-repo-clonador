@@ -73,7 +73,7 @@ func getGroupApiURL(groupParam string) string {
 }
 
 func getSubGroupdApiURL(groupParam string) string {
-	return getGroupApiURL(groupParam) + "subgroups/"
+	return getGroupApiURL(groupParam) + "subgroups/?per_page=1000"
 }
 
 func fetchSubGroups(url string) []Subgroup {
